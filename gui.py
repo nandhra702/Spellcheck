@@ -2,32 +2,48 @@ import subprocess
 from tkinter import *
 
 def get_suggestions(mode, word):
-    try:
-        result = subprocess.run(
-            ["./executable", mode, word],
-            capture_output=True,
-            text=True
-        )
-        return result.stdout.strip().split('\n') if result.stdout else []
-    except Exception as e:
-        return []
+    
+    result = subprocess.run(["./executable", mode, word],capture_output=True,text=True) 
+    #CAPTURES ANY OUTPUT THATS THERE the C++ program returns, and treats that output as string : i.e text = true.
+    return result.stdout.strip().split('\n') 
 
-def get_current_word():
+
+def get_current_word(): #THIS HERE, READS THE TEXT BOX, STRIPS THE SPACES at begining and end, SPLITS THEM UP AND RETURNS THE LAST WORD
     text = textbox.get("1.0", END).strip()
     words = text.split()
     return words[-1] if words else ""
 
+
+def get_current_word_shorter(): #function that simply starts to read from last 30 charcters
+    #first, we need to get the size of words typed in the textbox.
+    #if its smaller than a threshold, we use the original above function. If not, this function continues.
+    start_index = "end-31c"  # 30 chars before the final character
+    end_index = "end-1c"     # one character before the auto-added newline
+    text= textbox.get(start_index, end_index)
+    words = text.strip().split()
+    return words[-1] if words else ""
+
+
+
 def update_autocomplete_suggestions(word):
-    if not word:
+    if not word: #if its space or punctuation, it skips finding suggestions
         listbox.delete(0, END)
         return
+    #else
     suggestions = get_suggestions("autocomplete", word)
-    listbox.delete(0, END)
+    listbox.delete(0, END) #empties out the suggestion textbox and one by one, fills in the suggested words returned.
     for suggestion in suggestions:
         listbox.insert(END, suggestion)
 
+
 def on_key_release(event):
-    word = get_current_word()
+    
+    char_count = len(textbox.get("1.0", "end-1c")) 
+    if char_count<30:
+        word = get_current_word()
+    else:
+        word = get_current_word_shorter()
+
     update_autocomplete_suggestions(word)
 
 def on_space(event):
